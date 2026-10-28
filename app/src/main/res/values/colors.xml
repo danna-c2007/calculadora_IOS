@@ -1,0 +1,8 @@
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="control_button">#FFA5A5A5</color>
+    <color name="operator_button">#FFFF9F0A</color>
+    <color name="number_button">#FF2A2928</color>
+    <color name="expression_text">#FF8E8E93</color>
+</resources>
