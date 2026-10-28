@@ -23,8 +23,8 @@ class CalculatorModel {
         return num1 / num2
     }
 
-    // Calcula el módulo (residuo) entre dos números
-    fun module(num1: Double, num2: Double): Double {
-        return num1 % num2
+    // Calcula el porcentaje de un número (num / 100)
+    fun percentage(num: Double): Double {
+        return num / 100.0
     }
 }

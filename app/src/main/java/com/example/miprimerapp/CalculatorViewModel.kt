@@ -43,7 +43,8 @@ class CalculatorViewModel : ViewModel() {
         when (button) {
             in digits -> writeDigit(button)
             "," -> writeComma()
-            "+", "-", "×", "÷", "%" -> chooseOperator(button)
+            "+", "-", "×", "÷" -> chooseOperator(button)
+            "%" -> applyPercentage()
             "=" -> calculateResult()
             "AC" -> clearAll()
             "⌫" -> deleteLastDigit()
@@ -151,6 +152,35 @@ class CalculatorViewModel : ViewModel() {
         }
     }
 
+    // Aplica la función de porcentaje sobre el número actual
+    private fun applyPercentage() {
+        if (finished) {
+            finished = false
+        }
+
+        if (operator.isEmpty()) {
+            if (number1.isEmpty()) return
+            val val1 = toNumber(number1) ?: return
+            val percentVal = model.percentage(val1)
+            number1 = formatNumber(percentVal)
+            finished = true
+        } else {
+            if (number2.isEmpty()) {
+                number2 = number1
+            }
+            val val1 = toNumber(number1) ?: return
+            val val2 = toNumber(number2) ?: return
+
+            val percentVal = when (operator) {
+                "+", "-" -> val1 * model.percentage(val2)
+                "×", "÷" -> model.percentage(val2)
+                else -> model.percentage(val2)
+            }
+            number2 = formatNumber(percentVal)
+        }
+        updateScreen()
+    }
+
     // Borra el último dígito ingresado (Backspace)
     private fun deleteLastDigit() {
         if (current.isEmpty()) return
@@ -195,19 +225,18 @@ class CalculatorViewModel : ViewModel() {
             "-" -> model.subtraction(a, b)
             "×" -> model.multiply(a, b)
             "÷" -> if (b != 0.0) model.divide(a, b) else return ERROR
-            "%" -> if (b != 0.0) model.module(a, b) else return ERROR
             else -> return ERROR
         }
 
         return formatNumber(answer)
     }
 
-    // Formatea el resultado numérico para visualización
+    // Formatea el resultado numérico para visualización evitando imprecisiones de coma flotante
     private fun formatNumber(number: Double): String {
-        return if ((number % 1) == 0.0) {
-            number.toLong().toString()
-        } else {
-            number.toString().replace(".", ",")
-        }
+        if (number.isNaN() || number.isInfinite()) return ERROR
+        val bd = java.math.BigDecimal.valueOf(number)
+            .setScale(8, java.math.RoundingMode.HALF_UP)
+            .stripTrailingZeros()
+        return bd.toPlainString().replace(".", ",")
     }
 }
