@@ -1,21 +1,8 @@
 package com.example.miprimerapp
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.compose.material3.Button
@@ -31,7 +18,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
+// Vista principal de la calculadora con diseño estilo iOS
 @Composable
 fun ShowCalculator(
     navController: NavController,
@@ -43,12 +33,17 @@ fun ShowCalculator(
             .background(Color.Black)
             .safeDrawingPadding()
     ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.Bottom,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(10.dp),
+            verticalArrangement = Arrangement.Bottom,
+        ) {
+            // Fila de botones superiores para navegar a Historial y Convertidor
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
                     onClick = { navController.navigate("history") },
@@ -60,38 +55,55 @@ fun ShowCalculator(
                     Text(text = stringResource(R.string.history_symbol), color = colorResource(R.color.black))
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Button(
+                    onClick = { navController.navigate("converter") },
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorResource(R.color.control_button)),
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Text(text = stringResource(R.string.converter_symbol), color = colorResource(R.color.black))
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Pantalla para mostrar la expresión matemática actual
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 text = viewModel.expression,
-                fontSize = 28.sp,                                       // nuevo
-                color = colorResource(R.color.expression_text),         // antes: Color.Gray
+                fontSize = 28.sp,
+                color = colorResource(R.color.expression_text),
                 textAlign = TextAlign.End,
                 softWrap = false,
                 maxLines = 1
             )
+            
+            // Pantalla para mostrar el resultado actual
             Text(
                 modifier = Modifier.fillMaxWidth(),
                 text = viewModel.result,
                 fontSize = 45.sp,
-                color = colorResource(R.color.white),                   // antes: Color.White
+                color = colorResource(R.color.white),
                 textAlign = TextAlign.End,
                 softWrap = false,
                 maxLines = 1
             )
+            
+            // Cuadrícula de botones de la calculadora
             Column(
                 Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
                 Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                ShowButton(R.string.delete_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
-                ShowButton(R.string.clear_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
-                ShowButton(R.string.percent_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
-                ShowButton(R.string.divide_symbol, R.color.operator_button, viewModel::manageClickButtons)
-            }
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    ShowButton(R.string.delete_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
+                    ShowButton(R.string.clear_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
+                    ShowButton(R.string.percent_symbol, R.color.control_button, viewModel::manageClickButtons, R.color.black)
+                    ShowButton(R.string.divide_symbol, R.color.operator_button, viewModel::manageClickButtons)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(7.dp)
@@ -133,7 +145,7 @@ fun ShowCalculator(
     }
 }
 
-
+// Componente reutilizable para cada botón de la calculadora
 @Composable
 fun RowScope.ShowButton(
     @StringRes textId: Int,
@@ -158,6 +170,7 @@ fun RowScope.ShowButton(
         Text(text = text, fontSize = 28.sp)
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun CalculatorPreview() {
