@@ -1,6 +1,8 @@
 <resources>
+    <!-- Nombre de la aplicación -->
     <string name="app_name">MiPrimerApp</string>
 
+    <!-- Símbolos y controles de la calculadora -->
     <string name="delete_symbol">⌫</string>
     <string name="clear_symbol">AC</string>
     <string name="percent_symbol">%</string>
@@ -8,13 +10,13 @@
     <string name="comma_symbol">,</string>
     <string name="equals_symbol">=</string>
 
-
+    <!-- Operadores aritméticos -->
     <string name="divide_symbol">÷</string>
     <string name="multiply_symbol">×</string>
     <string name="subtraction_symbol">-</string>
     <string name="add_symbol">+</string>
 
-
+    <!-- Dígitos numéricos del 0 al 9 -->
     <string name="digit_0">0</string>
     <string name="digit_1">1</string>
     <string name="digit_2">2</string>
@@ -26,9 +28,21 @@
     <string name="digit_8">8</string>
     <string name="digit_9">9</string>
 
+    <!-- Símbolos y textos de navegación y pantallas adicionales -->
     <string name="history_symbol">H</string>
+    <string name="converter_symbol">Conv</string>
+    <string name="history_title">Historial</string>
+    <string name="empty_history">No hay operaciones registradas</string>
+    <string name="back_button">Volver</string>
 
-    <string name="history_description">Historial</string>
+    <!-- Textos del convertidor de masa -->
+    <string name="converter_title">Convertidor de Masa</string>
+    <string name="enter_value">Ingrese valor</string>
+    <string name="from_unit">De unidad:</string>
+    <string name="to_unit">A unidad:</string>
+    <string name="result_label">Resultado</string>
+
+    <!-- Mensajes de error -->
     <string name="error_division_by_zero">No se puede dividir por cero</string>
     <string name="error_invalid_input">Entrada inválida</string>
 </resources>

@@ -74,7 +74,7 @@ fun ShowCalculator(
             }
 
             Spacer(modifier = Modifier.weight(1f))
-
+            
             // Pantalla para mostrar la expresión matemática actual
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -85,7 +85,7 @@ fun ShowCalculator(
                 softWrap = false,
                 maxLines = 1
             )
-
+            
             // Pantalla para mostrar el resultado actual
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -96,7 +96,7 @@ fun ShowCalculator(
                 softWrap = false,
                 maxLines = 1
             )
-
+            
             // Cuadrícula de botones de la calculadora
             Column(
                 Modifier.fillMaxWidth(),
