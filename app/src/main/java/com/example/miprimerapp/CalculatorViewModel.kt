@@ -24,19 +24,19 @@ class CalculatorViewModel : ViewModel() {
     // Lista observable para almacenar el historial de operaciones realizadas
     val historyList = mutableStateListOf<String>()
 
-    private var number1 = ""
-    private var number2 = ""
-    private var operator = ""
+    // Números y operadores ya confirmados, siempre terminan en operador.
+    // Ejemplo: al escribir 9 + 2 ÷ queda ["9", "+", "2", "÷"]
+    private val tokens = mutableListOf<String>()
+
+    // Número que se está escribiendo en este momento
+    private var current = ""
+        set(value) {
+            field = value
+            updateScreen()
+        }
 
     private var finished = false
     private val digits = ('0'..'9').map { it.toString() }
-
-    private var current: String
-        get() = if (operator.isEmpty()) number1 else number2
-        set(value) {
-            if (operator.isEmpty()) number1 = value else number2 = value
-            updateScreen()
-        }
 
     // Gestiona los clics de cada botón presionado en la interfaz de la calculadora
     fun manageClickButtons(button: String) {
@@ -52,22 +52,23 @@ class CalculatorViewModel : ViewModel() {
         }
     }
 
-    // Actualiza la pantalla según los números y operador actuales
-    private fun updateScreen() {
-        result = when {
-            operator.isNotEmpty() -> "$number1 $operator ${showSecond(number2)}".trim()
-            number1.isEmpty() -> "0"
-            else -> number1
-        }
+    // Los números negativos (salvo el primero) se muestran entre paréntesis.
+    // Los números están en posiciones pares y los operadores en las impares.
+    private fun format(token: String, index: Int): String {
+        return if (index > 0 && index % 2 == 0 && token.startsWith("-")) "($token)" else token
     }
 
-    private fun showSecond(number: String): String {
-        return if (number.startsWith("-")) "($number)" else number
+    // Actualiza la pantalla con todo lo que se ha escrito hasta ahora
+    private fun updateScreen() {
+        val parts = tokens.mapIndexed { i, t -> format(t, i) }.toMutableList()
+        if (current.isNotEmpty()) parts.add(format(current, tokens.size))
+        result = if (parts.isEmpty()) "0" else parts.joinToString(" ")
     }
 
     private fun startNewIfFinished() {
         if (finished) {
-            number1 = ""
+            tokens.clear()
+            current = ""
             expression = ""
             finished = false
         }
@@ -96,57 +97,96 @@ class CalculatorViewModel : ViewModel() {
         }
     }
 
-    // Selecciona un operador aritmético
+    // Selecciona un operador: NO calcula nada, solo guarda el número y el operador
     private fun chooseOperator(newOperator: String) {
-        if (number1.isEmpty()) number1 = "0"
-        number1 = number1.trimEnd(',')
-
-        if (operator.isNotEmpty() && number2.isNotEmpty()) {
-            val partial = calculate(number1, number2, operator)
-            if (partial == ERROR) {
-                showError()
+        if (current.isEmpty()) {
+            if (tokens.isEmpty()) {
+                current = "0"
+            } else {
+                // Ya había un operador sin número después: se reemplaza por el nuevo
+                tokens[tokens.lastIndex] = newOperator
+                updateScreen()
                 return
             }
-            number1 = partial
-            number2 = ""
         }
 
-        operator = newOperator
+        tokens.add(current.trimEnd(','))
+        tokens.add(newOperator)
         finished = false
         expression = ""
-        updateScreen()
+        current = "" // también actualiza la pantalla
     }
 
-    // Calcula el resultado final y lo registra en el historial
+    // Calcula toda la expresión de una vez y la registra en el historial
     private fun calculateResult() {
-        if (operator.isEmpty()) return
+        if (tokens.isEmpty()) return
 
-        if (number2.isEmpty()) number2 = number1
-        number2 = number2.trimEnd(',')
+        // Si no se escribió el último número, se repite el anterior (ej: 5 + = da 10)
+        val last = current.ifEmpty { tokens[tokens.size - 2] }.trimEnd(',')
+        val all = tokens + last
 
-        val answer = calculate(number1, number2, operator)
+        val answer = evaluate(all)
         if (answer == ERROR) {
             showError()
             return
         }
 
-        val fullExpression = "$number1 $operator ${showSecond(number2)}"
+        val fullExpression = all.mapIndexed { i, t -> format(t, i) }.joinToString(" ")
         expression = "$fullExpression ="
-        val record = "$fullExpression = $answer"
-        historyList.add(0, record) // Guarda la operación en el historial
+        historyList.add(0, "$fullExpression = $answer") // Guarda la operación en el historial
 
-        number1 = answer
-        number2 = ""
-        operator = ""
+        tokens.clear()
         finished = true
-        result = answer
+        current = answer
+    }
+
+    // Evalúa respetando la jerarquía: primero × y ÷, después + y -
+    // Ejemplo: 9 + 2 ÷ 2 = 10
+    private fun evaluate(items: List<String>): String {
+        val values = mutableListOf<Double>()
+        val ops = mutableListOf<String>()
+
+        values.add(toNumber(items[0]) ?: return ERROR)
+
+        var i = 1
+        while (i < items.size) {
+            val op = items[i]
+            val next = toNumber(items[i + 1]) ?: return ERROR
+
+            if (op == "×" || op == "÷") {
+                // Se resuelve de inmediato con el número anterior
+                val prev = values.removeAt(values.lastIndex)
+                val partial = if (op == "×") {
+                    model.multiply(prev, next)
+                } else {
+                    if (next == 0.0) return ERROR
+                    model.divide(prev, next)
+                }
+                values.add(partial)
+            } else {
+                // + y - se dejan pendientes para el final
+                ops.add(op)
+                values.add(next)
+            }
+            i += 2
+        }
+
+        var total = values[0]
+        for (j in ops.indices) {
+            val b = values[j + 1]
+            total = if (ops[j] == "+") model.add(total, b) else model.subtraction(total, b)
+        }
+
+        return formatNumber(total)
     }
 
     // Cambia el signo del número actual (+/-)
     private fun changeSign() {
-        if ((current.isEmpty()) || (current == "0")) return
+        if (current == "0") return
+        if (current.isEmpty() && tokens.isEmpty()) return
+
         current = when {
-            operator.isNotEmpty() && number2.isEmpty() -> "-0"
+            current.isEmpty() -> "-0"
             current.startsWith("-") -> current.drop(1)
             else -> "-$current"
         }
@@ -154,54 +194,58 @@ class CalculatorViewModel : ViewModel() {
 
     // Aplica la función de porcentaje sobre el número actual
     private fun applyPercentage() {
-        if (finished) {
-            finished = false
-        }
+        finished = false
 
-        if (operator.isEmpty()) {
-            if (number1.isEmpty()) return
-            val val1 = toNumber(number1) ?: return
-            val percentVal = model.percentage(val1)
-            number1 = formatNumber(percentVal)
+        if (tokens.isEmpty()) {
+            if (current.isEmpty()) return
+            val value = toNumber(current) ?: return
+            current = formatNumber(model.percentage(value))
             finished = true
         } else {
-            if (number2.isEmpty()) {
-                number2 = number1
-            }
-            val val1 = toNumber(number1) ?: return
-            val val2 = toNumber(number2) ?: return
+            val operator = tokens.last()
+            val value = toNumber(current.ifEmpty { tokens[tokens.size - 2] }) ?: return
 
             val percentVal = when (operator) {
-                "+", "-" -> val1 * model.percentage(val2)
-                "×", "÷" -> model.percentage(val2)
-                else -> model.percentage(val2)
+                // En + y - el porcentaje es sobre lo acumulado antes del operador
+                "+", "-" -> {
+                    val base = toNumber(evaluate(tokens.dropLast(1))) ?: return
+                    base * model.percentage(value)
+                }
+                else -> model.percentage(value)
             }
-            number2 = formatNumber(percentVal)
+            current = formatNumber(percentVal)
         }
-        updateScreen()
     }
 
     // Borra el último dígito ingresado (Backspace)
     private fun deleteLastDigit() {
-        if (current.isEmpty()) return
+        if (current.isEmpty()) {
+            // Si acaba de escribir un operador, lo quita y recupera el número anterior
+            if (tokens.size >= 2) {
+                tokens.removeAt(tokens.lastIndex)
+                current = tokens.removeAt(tokens.lastIndex)
+            }
+            return
+        }
 
         if (finished) {
             finished = false
             expression = ""
         }
 
+        // Si no queda nada (o solo el signo "-"), el número queda vacío.
+        // Así el siguiente ⌫ puede borrar el operador y seguir hacia atrás.
         val newValue = current.dropLast(1)
-        current = if ((newValue.isEmpty()) || (newValue == "-")) "0" else newValue
+        current = if (newValue == "-") "" else newValue
     }
 
     // Limpia todos los campos (AC)
     private fun clearAll() {
-        number1 = ""
-        number2 = ""
-        operator = ""
+        tokens.clear()
         finished = false
-        result = "0"
         expression = ""
+        current = ""
+        result = "0"
     }
 
     // Muestra el estado de error en pantalla
@@ -215,22 +259,6 @@ class CalculatorViewModel : ViewModel() {
         return text.replace(",", ".").toDoubleOrNull()
     }
 
-    // Realiza el cálculo llamando al modelo
-    private fun calculate(n1: String, n2: String, op: String): String {
-        val a = toNumber(n1) ?: return ERROR
-        val b = toNumber(n2) ?: return ERROR
-
-        val answer = when (op) {
-            "+" -> model.add(a, b)
-            "-" -> model.subtraction(a, b)
-            "×" -> model.multiply(a, b)
-            "÷" -> if (b != 0.0) model.divide(a, b) else return ERROR
-            else -> return ERROR
-        }
-
-        return formatNumber(answer)
-    }
-
     // Formatea el resultado numérico para visualización evitando imprecisiones de coma flotante
     private fun formatNumber(number: Double): String {
         if (number.isNaN() || number.isInfinite()) return ERROR
@@ -240,3 +268,4 @@ class CalculatorViewModel : ViewModel() {
         return bd.toPlainString().replace(".", ",")
     }
 }
+
