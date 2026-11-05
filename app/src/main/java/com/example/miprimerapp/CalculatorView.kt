@@ -45,7 +45,7 @@ fun ShowCalculator(
             // Fila de botones superiores para navegar a Convertidor e Historial
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
                     onClick = { navController.navigate("converter") },
