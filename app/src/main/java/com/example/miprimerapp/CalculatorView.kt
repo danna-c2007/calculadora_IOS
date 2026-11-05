@@ -42,21 +42,12 @@ fun ShowCalculator(
                 .padding(10.dp),
             verticalArrangement = Arrangement.Bottom,
         ) {
-            // Fila de botones superiores para navegar a Convertidor e Historial
+            // Fila de botones superiores para navegar a Historial y Convertidor
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(
-                    onClick = { navController.navigate("converter") },
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorResource(R.color.control_button)),
-                    modifier = Modifier.size(50.dp)
-                ) {
-                    Text(text = stringResource(R.string.converter_symbol), color = colorResource(R.color.black))
-                }
-
+                // Botón de Historial a la izquierda
                 Button(
                     onClick = { navController.navigate("history") },
                     shape = CircleShape,
@@ -67,7 +58,23 @@ fun ShowCalculator(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_history),
                         contentDescription = stringResource(R.string.history_title),
-                        tint = colorResource(R.color.black),
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                // Botón de Convertidor a la derecha
+                Button(
+                    onClick = { navController.navigate("converter") },
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorResource(R.color.control_button)),
+                    modifier = Modifier.size(50.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_calculator),
+                        contentDescription = stringResource(R.string.converter_title),
+                        tint = Color.White,
                         modifier = Modifier.size(26.dp)
                     )
                 }
